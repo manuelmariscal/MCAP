@@ -32,3 +32,14 @@ Sirven para realizar una descripcion abstracta para poder representar data como 
 
 Tenemos datos de tipo NUMÉRICOS, DATE, STRING, VARCHAR
 
+## Propiedades 
+
+- NOT NULL: vlaidar que la columna forzosamente tiene que tener datos
+- Default Values: Si no le se asigna un valor, se pondrá un valor por default
+- Primary Key: 
+
+![alt text](images/propiedades.png)
+
+## Tarea 
+
+Define una tabla de empleados con las siguientes
