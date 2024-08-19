@@ -40,6 +40,11 @@ Tenemos datos de tipo NUMÉRICOS, DATE, STRING, VARCHAR
 
 ![alt text](images/propiedades.png)
 
-## Tarea 
+# CRUD
 
-Define una tabla de empleados con las siguientes
+CRUD es 
+
+- Create
+- Read
+- Update
+- Delete
