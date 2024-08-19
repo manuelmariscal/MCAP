@@ -10,9 +10,9 @@ La diferencia impera en que la base de datos es el conjunto de datos vs que el m
 
 DB en uso:
 
-´´´bash
+```bash
 USE <database name>
-´´´
+```
 ## Tablas 
 
 Las tablas almacenan informacion dentro de una DB relacional
