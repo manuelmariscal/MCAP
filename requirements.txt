@@ -1,15 +1,24 @@
 
 # Si decides usar SQLAlchemy en el futuro:
-SQLAlchemy==2.0.0
+SQLAlchemy
 
 # Para usar dotenv para gestión de variables de entorno:
-python-dotenv==1.0.0
+python-dotenv
 
 # Para desarrollo y pruebas:
-pytest==7.0.0
+pytest
 
 # Pandas
 pandas
 
 # Numpy
 numpy
+
+# requests
+requests
+
+# beautifulsoup4
+bs4
+
+# lxml
+lxml
