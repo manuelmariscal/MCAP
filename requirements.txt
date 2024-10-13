@@ -22,3 +22,7 @@ bs4
 
 # lxml
 lxml
+
+scipy
+statsmodels
+seaborn
