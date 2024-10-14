@@ -1,122 +1,155 @@
 import requests
 from bs4 import BeautifulSoup
-import pandas as pd
-from io import StringIO
+import sqlite3
+from neo4j import GraphDatabase
+from pyspark.sql import SparkSession
+from datetime import datetime
+import logging
 import os
-import re
 
-# Definir el path donde se guardarán los CSV
-file_path = r'MODELADO DE DATOS 24B\Proyecto Final\liga_data_csv'
+# Configuración de log
+logging.basicConfig(level=logging.INFO)
 
-# Crear el directorio si no existe
-if not os.path.exists(file_path):
-    os.makedirs(file_path)
+class AmazonScraper:
+    def __init__(self):
+        self.base_url_bestsellers = 'https://www.amazon.com.mx/gp/bestsellers'
+        self.base_url_deals = 'https://www.amazon.com.mx/deals?discounts-widget=%2522%257B%255C%2522state%255C%2522%253A%257B%255C%2522refinementFilters%255C%2522%253A%257D%257D%252C%255C%2522version%255C%2522%253A1%257D%2522'
+        self.mysql_conn = self.connect_sqlite()  # Usamos SQLite
+        self.neo4j_driver = self.connect_neo4j()
+        self.spark = SparkSession.builder.appName("AmazonScraper").getOrCreate()
 
-# Función para limpiar y simplificar los encabezados de los DataFrames sin perder información importante
-def clean_headers(df):
-    new_columns = []
-    for col in df.columns:
-        # Eliminar cualquier número irrelevante pero mantener nombres de columnas relevantes
-        clean_col = re.sub(r'\d+', '', col)  # Eliminar números
-        clean_col = re.sub(r'_', ' ', clean_col)  # Reemplazar guión bajo por espacio
-        clean_col = clean_col.strip()  # Quitar espacios al inicio o final
-        new_columns.append(clean_col)
-    df.columns = new_columns
-    return df
-
-# Función para ajustar valores numéricos con formato adecuado, ignorando columnas que no sean numéricas
-def clean_numeric_values(df):
-    for col in df.columns:
-        # Verificar si la columna tiene valores que pueden convertirse a numéricos
+    def connect_sqlite(self):
         try:
-            df[col] = pd.to_numeric(df[col], errors='coerce')  # Convertir a números si es posible
-        except (ValueError, TypeError):
-            # Si no es posible convertir a numérico, continuar sin modificar la columna
-            print(f"Columna '{col}' no es numérica, se omite su conversión.")
-    return df
+            conn = sqlite3.connect('./amazon.db')  # Conexión a tu archivo de base de datos SQLite
+            return conn
+        except sqlite3.Error as err:
+            logging.error(f"Error connecting to SQLite: {err}")
+            return None
 
-# Función para cargar, limpiar y guardar los CSV en el directorio especificado
-def process_csv_files(directory):
-    # Listar todos los archivos CSV en el directorio
-    for filename in os.listdir(directory):
-        if filename.endswith(".csv"):
-            full_path = os.path.join(directory, filename)
-            try:
-                # Cargar el archivo CSV
-                df = pd.read_csv(full_path)
-                # Limpiar los encabezados
-                df_cleaned = clean_headers(df)
-                # Ajustar los valores numéricos
-                df_cleaned = clean_numeric_values(df_cleaned)
-                # Guardar el archivo nuevamente en el directorio especificado con los encabezados corregidos
-                df_cleaned.to_csv(os.path.join(file_path, filename), index=False)
-                print(f"Archivo '{filename}' procesado y guardado correctamente en '{file_path}'.")
-            except Exception as e:
-                print(f"Error procesando el archivo '{filename}': {e}")
+    def connect_neo4j(self):
+        try:
+            driver = GraphDatabase.driver("bolt://localhost:7687", auth=("neo4j", "your_password"))
+            return driver
+        except Exception as e:
+            logging.error(f"Error connecting to Neo4j: {e}")
+            return None
 
-# URL de la página que contiene todas las tablas de estadísticas avanzadas
-url = "https://fbref.com/es/comps/31/Liga-MX-Estadisticas"
+    def fetch_best_sellers(self):
+        try:
+            response = requests.get(self.base_url_bestsellers)
+            soup = BeautifulSoup(response.text, 'html.parser')
 
-# Realizamos la solicitud HTTP
-response = requests.get(url)
+            products = soup.find_all('a', {'class': 'a-link-normal aok-block'})  # Ajustar selector
+            logging.info(f"Found {len(products)} products")  # Imprimir cuántos productos encontramos
 
-# Comprobamos que la conexión fue exitosa
-if response.status_code == 200:
-    soup = BeautifulSoup(response.content, 'html.parser')
+            product_list = []
 
-    # IDs de las tablas que necesitamos extraer
-    table_ids = [
-        'stats_squads_standard_for',
-        'stats_squads_shooting_for',
-        'stats_squads_passing_for',
-        'stats_squads_possession_for',
-        'stats_squads_defense_for',
-        'stats_squads_playing_time_for',
-        'stats_squads_keeper_for',
-        'stats_squads_misc_for'
-    ]
+            for product in products:
+                try:
+                    # Extraer el nombre del producto
+                    product_name = product.get_text(strip=True)
+                    logging.info(f"Product Name: {product_name}")  # Verificar si se extrae el nombre
 
-    all_data = {}
+                    # Extraer el link del producto
+                    product_link = 'https://www.amazon.com.mx' + product['href']
 
-    # Recorrer cada ID de tabla y extraer los datos
-    for table_id in table_ids:
-        # Encontrar la tabla por su ID
-        table = soup.find('table', id=table_id)
+                    # Extraer el precio asociado
+                    price_parent = product.find_next('span', {'class': 'a-price'})
+                    if price_parent:
+                        product_price = price_parent.find('span', {'class': 'a-price-whole'})
+                        if product_price:
+                            product_price = product_price.get_text(strip=True)
+                            logging.info(f"Product Price: {product_price}")  # Verificar si se extrae el precio
+                        else:
+                            logging.warning("Price not found for this product")
+                    else:
+                        logging.warning("Price parent not found for this product")
 
-        if table:
-            # Obtener el nombre de la tabla de su caption
-            caption = table.find('caption')
-            table_name = caption.text.strip() if caption else 'Unknown_Table'
+                    product_list.append({
+                        'name': product_name,
+                        'price': float(product_price.replace('$', '').replace(',', '')) if product_price else None,
+                        'link': product_link,
+                        'category': 'Best Seller'
+                    })
 
-            # Leer la tabla directamente con pandas, manejando encabezados de múltiples niveles
-            table_html = str(table)
-            df = pd.read_html(StringIO(table_html), header=[1, 2])[0]
+                except AttributeError as e:
+                    logging.warning(f"Could not extract price or name for a product: {e}")
+                    continue
 
-            # Aplanar los encabezados de múltiples niveles
-            df.columns = ['_'.join(col).strip() for col in df.columns.values]
+            return product_list
+        except Exception as e:
+            logging.error(f"Error fetching best sellers: {e}")
+            return []
 
-            # Eliminar columnas duplicadas o vacías si las hay
-            df = df.loc[:, ~df.columns.duplicated()]
+    def fetch_deals(self):
+        try:
+            response = requests.get(self.base_url_deals)
+            soup = BeautifulSoup(response.text, 'html.parser')
+            deals = soup.find_all('a', {'class': 'dealTitle'})
+            product_list = []
+            for deal in deals:
+                product_url = 'https://www.amazon.com.mx' + deal['href']
+                product_detail = self.fetch_product_detail(product_url)
+                if product_detail:
+                    product_list.append(product_detail)
+            return product_list
+        except Exception as e:
+            logging.error(f"Error fetching deals: {e}")
+            return []
 
-            # Limpiar los encabezados
-            df_cleaned = clean_headers(df)
-            # Ajustar los valores numéricos
-            df_cleaned = clean_numeric_values(df_cleaned)
+    def fetch_product_detail(self, url):
+        try:
+            response = requests.get(url)
+            soup = BeautifulSoup(response.text, 'html.parser')
+            name = soup.find('span', {'id': 'productTitle'}).text.strip()
+            price = soup.find('span', {'class': 'priceBlockBuyingPriceString'}).text.replace('$', '').replace(',', '')
+            return {
+                'name': name,
+                'price': float(price),
+                'category': 'Deals'
+            }
+        except Exception as e:
+            logging.error(f"Error fetching product detail: {e}")
+            return None
 
-            # Guardar el DataFrame en el diccionario
-            all_data[table_name] = df_cleaned
-            print(f"Tabla '{table_name}' extraída correctamente.")
-        else:
-            print(f"Tabla con ID '{table_id}' no encontrada.")
+    def store_data_sqlite(self, product_list):
+        cursor = self.mysql_conn.cursor()
+        try:
+            for product in product_list:
+                cursor.execute("""
+                    INSERT INTO products (name, price, category, created_at)
+                    VALUES (?, ?, ?, ?)
+                    ON CONFLICT(name) DO UPDATE SET price=?, updated_at=?
+                """, (product['name'], product['price'], product['category'], datetime.now(), product['price'], datetime.now()))
+            self.mysql_conn.commit()
+        except sqlite3.Error as err:
+            logging.error(f"Error storing data in SQLite: {err}")
 
-    # Guardar todas las tablas en archivos CSV
-    for name, df in all_data.items():
-        filename = name.replace(' ', '_').replace('/', '_').replace(':', '').lower() + '.csv'
-        df.to_csv(os.path.join(file_path, filename), index=False)
-        print(f"Tabla guardada como '{filename}' en '{file_path}'.")
+    def store_data_neo4j(self, product_list):
+        session = self.neo4j_driver.session()
+        try:
+            for product in product_list:
+                session.run("""
+                    MERGE (p:Product {name: $name})
+                    SET p.price = $price, p.category = $category
+                    MERGE (c:Category {name: $category})
+                    MERGE (p)-[:BELONGS_TO]->(c)
+                """, name=product['name'], price=product['price'], category=product['category'])
+        except Exception as e:
+            logging.error(f"Error storing data in Neo4j: {e}")
+        finally:
+            session.close()
 
-    # Procesar todos los CSV para garantizar que los encabezados y valores estén bien formateados
-    process_csv_files(file_path)  # Procesar los archivos guardados en el nuevo directorio
+    def run(self):
+        best_sellers = self.fetch_best_sellers()
+        deals = self.fetch_deals()
+        all_products = best_sellers + deals
 
-else:
-    print(f"Error al acceder a la página. Código de estado: {response.status_code}")
+        if all_products:
+            self.store_data_sqlite(all_products)
+            self.store_data_neo4j(all_products)
+
+# Ejecución del scraper
+if __name__ == "__main__":
+    scraper = AmazonScraper()
+    scraper.run()

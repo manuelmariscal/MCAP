@@ -22,7 +22,10 @@ bs4
 
 # lxml
 lxml
-
 scipy
 statsmodels
 seaborn
+neo4j
+mysql
+mysql-connector-python
+pyspark
