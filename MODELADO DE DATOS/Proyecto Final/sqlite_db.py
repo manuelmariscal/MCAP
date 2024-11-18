@@ -5,6 +5,7 @@ from utils import Utils
 from textblob import TextBlob
 from colorama import Fore, Style
 import os
+import traceback
 
 class SQLiteDatabase:
     def __init__(self):
@@ -22,6 +23,7 @@ class SQLiteDatabase:
             return connection
         except Exception as e:
             print(Fore.RED + f"Error al conectar a SQLite: {e}" + Style.RESET_ALL)
+            traceback.print_exc()
             raise
 
     def create_tables(self):
@@ -29,7 +31,7 @@ class SQLiteDatabase:
             cursor = self.connection.cursor()
             # Habilitar soporte para claves foráneas
             cursor.execute("PRAGMA foreign_keys = ON;")
-            # Creación de tablas
+            # Creación de tablas con constraints de unicidad
             cursor.execute("""
             CREATE TABLE IF NOT EXISTS usuarios (
                 usuario_id TEXT PRIMARY KEY,
@@ -51,42 +53,27 @@ class SQLiteDatabase:
                 FOREIGN KEY (usuario_id) REFERENCES usuarios(usuario_id)
             );
             """)
-            cursor.execute("""
-            CREATE TABLE IF NOT EXISTS palabras_clave (
-                palabra_clave_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                texto TEXT
-            );
-            """)
-            cursor.execute("""
-            CREATE TABLE IF NOT EXISTS tweets_palabrasclave (
-                tweet_id TEXT,
-                palabra_clave_id INTEGER,
-                PRIMARY KEY (tweet_id, palabra_clave_id),
-                FOREIGN KEY (tweet_id) REFERENCES tweets(tweet_id),
-                FOREIGN KEY (palabra_clave_id) REFERENCES palabras_clave(palabra_clave_id)
-            );
-            """)
             self.connection.commit()
             print(Fore.GREEN + "Tablas creadas exitosamente en SQLite." + Style.RESET_ALL)
         except Exception as e:
             print(Fore.RED + f"Error al crear tablas en SQLite: {e}" + Style.RESET_ALL)
+            traceback.print_exc()
             self.connection.rollback()
             raise
 
-    def insert_data(self, tweets_data, keywords):
+    def insert_data(self, tweets_data):
         try:
+            if not tweets_data:
+                print(Fore.YELLOW + "No hay datos de tweets para insertar en SQLite." + Style.RESET_ALL)
+                return
             cursor = self.connection.cursor()
-            # Insertar palabras clave
-            keyword_ids = {}
-            for kw in keywords:
-                cursor.execute("INSERT INTO palabras_clave (texto) VALUES (?)", (kw,))
-                keyword_ids[kw] = cursor.lastrowid
 
             for data in tweets_data:
                 tweet = data['tweet']
                 user = data['user']
 
                 if not user:
+                    print(Fore.YELLOW + "No se encontró información del usuario para un tweet. Saltando..." + Style.RESET_ALL)
                     continue  # Saltar si no hay información de usuario
 
                 # Usuario
@@ -96,8 +83,8 @@ class SQLiteDatabase:
                 """, (
                     str(user.id),
                     user.username,
-                    user.public_metrics['followers_count'],
-                    user.location if 'location' in user else None,
+                    user.public_metrics.get('followers_count', 0),
+                    user.location if hasattr(user, 'location') else None,
                     user.verified
                 ))
 
@@ -114,23 +101,16 @@ class SQLiteDatabase:
                     str(user.id),
                     tweet.text,
                     tweet.created_at.isoformat(),
-                    tweet.public_metrics['retweet_count'],
-                    tweet.public_metrics['like_count'],
+                    tweet.public_metrics.get('retweet_count', 0),
+                    tweet.public_metrics.get('like_count', 0),
                     sentiment
                 ))
-
-                # Asociar tweet con palabras clave
-                for kw in keywords:
-                    if kw.lower() in tweet.text.lower():
-                        cursor.execute("""
-                            INSERT OR IGNORE INTO tweets_palabrasclave (tweet_id, palabra_clave_id)
-                            VALUES (?, ?)
-                        """, (str(tweet.id), keyword_ids[kw]))
 
             self.connection.commit()
             print(Fore.GREEN + "Datos insertados en SQLite exitosamente." + Style.RESET_ALL)
         except Exception as e:
             print(Fore.RED + f"Error al insertar datos en SQLite: {e}" + Style.RESET_ALL)
+            traceback.print_exc()
             self.connection.rollback()
             raise
 

@@ -6,6 +6,7 @@ from textblob import TextBlob
 from colorama import Fore, Style
 import os
 from dotenv import load_dotenv
+import traceback
 
 class Neo4jDatabase:
     def __init__(self):
@@ -29,33 +30,33 @@ class Neo4jDatabase:
             return driver
         except Exception as e:
             print(Fore.RED + f"Error al conectar a Neo4j: {e}" + Style.RESET_ALL)
+            traceback.print_exc()
             raise
 
     def create_constraints(self):
         try:
             with self.driver.session() as session:
                 # Constraints para unicidad
-                session.run("CREATE CONSTRAINT IF NOT EXISTS FOR (u:Usuario) REQUIRE u.usuario_id IS UNIQUE")
-                session.run("CREATE CONSTRAINT IF NOT EXISTS FOR (t:Tweet) REQUIRE t.tweet_id IS UNIQUE")
-                session.run("CREATE CONSTRAINT IF NOT EXISTS FOR (p:PalabraClave) REQUIRE p.texto IS UNIQUE")
+                session.run("CREATE CONSTRAINT IF NOT EXISTS ON (u:Usuario) ASSERT u.usuario_id IS UNIQUE")
+                session.run("CREATE CONSTRAINT IF NOT EXISTS ON (t:Tweet) ASSERT t.tweet_id IS UNIQUE")
             print(Fore.GREEN + "Constraints creados en Neo4j." + Style.RESET_ALL)
         except Exception as e:
             print(Fore.RED + f"Error al crear constraints en Neo4j: {e}" + Style.RESET_ALL)
+            traceback.print_exc()
             raise
 
-    def insert_data(self, tweets_data, keywords):
+    def insert_data(self, tweets_data):
         try:
+            if not tweets_data:
+                print(Fore.YELLOW + "No hay datos de tweets para insertar en Neo4j." + Style.RESET_ALL)
+                return
             with self.driver.session() as session:
-                # Insertar palabras clave
-                for kw in keywords:
-                    session.run("""
-                        MERGE (p:PalabraClave {texto: $texto})
-                    """, texto=kw)
                 for data in tweets_data:
                     tweet = data['tweet']
                     user = data['user']
 
                     if not user:
+                        print(Fore.YELLOW + "No se encontró información del usuario para un tweet. Saltando..." + Style.RESET_ALL)
                         continue  # Saltar si no hay información de usuario
 
                     # Usuario
@@ -67,8 +68,8 @@ class Neo4jDatabase:
                             u.verificado = $verificado
                     """, usuario_id=str(user.id),
                          nombre_usuario=user.username,
-                         seguidores=user.public_metrics['followers_count'],
-                         ubicacion=user.location if 'location' in user else None,
+                         seguidores=user.public_metrics.get('followers_count', 0),
+                         ubicacion=user.location if hasattr(user, 'location') else None,
                          verificado=user.verified)
                     # Sentimiento
                     analysis = TextBlob(tweet.text)
@@ -84,24 +85,18 @@ class Neo4jDatabase:
                     """, tweet_id=str(tweet.id),
                          contenido=tweet.text,
                          fecha_hora=tweet.created_at.strftime("%Y-%m-%d %H:%M:%S"),
-                         retweets=tweet.public_metrics['retweet_count'],
-                         likes=tweet.public_metrics['like_count'],
+                         retweets=tweet.public_metrics.get('retweet_count', 0),
+                         likes=tweet.public_metrics.get('like_count', 0),
                          sentimiento=sentiment)
                     # Relación PUBLICA
                     session.run("""
                         MATCH (u:Usuario {usuario_id: $usuario_id}), (t:Tweet {tweet_id: $tweet_id})
                         MERGE (u)-[:PUBLICA]->(t)
                     """, usuario_id=str(user.id), tweet_id=str(tweet.id))
-                    # Relación ASOCIADO_A
-                    for kw in keywords:
-                        if kw.lower() in tweet.text.lower():
-                            session.run("""
-                                MATCH (t:Tweet {tweet_id: $tweet_id}), (p:PalabraClave {texto: $texto})
-                                MERGE (t)-[:ASOCIADO_A]->(p)
-                            """, tweet_id=str(tweet.id), texto=kw)
             print(Fore.GREEN + "Datos insertados en Neo4j exitosamente." + Style.RESET_ALL)
         except Exception as e:
             print(Fore.RED + f"Error al insertar datos en Neo4j: {e}" + Style.RESET_ALL)
+            traceback.print_exc()
             raise
 
     def close_connection(self):
