@@ -80,4 +80,5 @@ class Analyzer:
             else:
                 print(Fore.YELLOW + "No hay datos suficientes para mostrar tendencia en el tiempo." + Style.RESET_ALL)
         except Exception as e:
-            print(Fore.RED + f"Error en análisis temporal: {e
+            print(Fore.RED + f"Error en análisis temporal: {e})" + Style.RESET_ALL)
+            
