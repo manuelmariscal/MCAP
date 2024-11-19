@@ -191,6 +191,8 @@ __pycache__/
 # Archivos creados por Windows
 thumbs.db
 
+
+tokens.json
 venv
 venv/
 venv/*
