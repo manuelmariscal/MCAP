@@ -40,7 +40,7 @@ class OpenAIAnalysis:
         }
 
         data = {
-            "model": "gpt-4",  # Modelo corregido
+            "model": "gpt-4o-mini",  # Modelo especificado
             "messages": [{"role": "user", "content": prompt}],
             "max_tokens": max_tokens,
             "temperature": 0.5
@@ -99,8 +99,7 @@ class OpenAIAnalysis:
             prompt = (
                 f"Analiza los siguientes tweets y proporciona un resumen de las tendencias, sentimientos y temas principales:\n\n"
                 f"   {combined_text}\n\n"
-                f"Lo que harás es redactar un tweet con esta información para compartir con otros usuarios. Mencionando que el análisis fue realizado por OpenAI utilizando herramientas programáticas y bases de datos para la materia de Modelado de Datos de la Maestría en Cómputo Aplicado como proyecto final de esa materia.\n\n"
-                f"Utiliza emojis, hashtags y menciones para hacerlo más interesante y atractivo para los lectores.\n\n"
+                f"  Resumen: "
             )
 
             # Enviar la solicitud a OpenAI usando ask_singularity
