@@ -40,7 +40,7 @@ class OpenAIAnalysis:
         }
 
         data = {
-            "model": "gpt-4o-mini",  # Modelo especificado
+            "model": "gpt-4",  # Modelo corregido
             "messages": [{"role": "user", "content": prompt}],
             "max_tokens": max_tokens,
             "temperature": 0.5
@@ -86,14 +86,21 @@ class OpenAIAnalysis:
                 return None
             print(Fore.BLUE + "Realizando análisis con OpenAI..." + Style.RESET_ALL)
             # Preparar el contenido para enviar a OpenAI
-            tweets_text = [data['tweet'].text for data in tweets_data]
+            if all('tweet' in data and 'user' in data for data in tweets_data):
+                # Datos provenientes de la API
+                tweets_text = [data['tweet'].text for data in tweets_data if 'tweet' in data and data['tweet']]
+            else:
+                # Datos provenientes de archivos JSON
+                tweets_text = [data.get('contenido', '') for data in tweets_data]
+
             combined_text = "\n\n".join(tweets_text)
 
             # Crear el prompt para OpenAI
             prompt = (
                 f"Analiza los siguientes tweets y proporciona un resumen de las tendencias, sentimientos y temas principales:\n\n"
                 f"   {combined_text}\n\n"
-                f"  Resumen: "
+                f"Lo que harás es redactar un tweet con esta información para compartir con otros usuarios. Mencionando que el análisis fue realizado por OpenAI utilizando herramientas programáticas y bases de datos para la materia de Modelado de Datos de la Maestría en Cómputo Aplicado como proyecto final de esa materia.\n\n"
+                f"Utiliza emojis, hashtags y menciones para hacerlo más interesante y atractivo para los lectores.\n\n"
             )
 
             # Enviar la solicitud a OpenAI usando ask_singularity
@@ -107,4 +114,4 @@ class OpenAIAnalysis:
         except Exception as e:
             print(Fore.RED + f"Error en el análisis con OpenAI: {e}" + Style.RESET_ALL)
             traceback.print_exc()
-            return None
+            return None 
