@@ -81,6 +81,8 @@ target/
 # IPython
 profile_default/
 ipython_config.py
+__pycache__/
+__pycache__/*
 
 # pyenv
 #   For a library or package, you might want to ignore these files since the code is
@@ -188,3 +190,9 @@ __pycache__/
 
 # Archivos creados por Windows
 thumbs.db
+
+
+tokens.json
+venv
+venv/
+venv/*

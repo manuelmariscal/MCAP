@@ -1,120 +1,186 @@
-# **Monitorización de Precios y Stock de Productos en E-commerce con Bases de Datos Relacionales y Grafos**
+# 📊 **Análisis de Datos de Twitter: Transformando la Información en Insights Valiosos** 🐦💡
 
-## **1. Descripción del Problema a Resolver**
-El entorno de comercio electrónico (e-commerce) se caracteriza por una alta volatilidad en los precios de los productos y la disponibilidad de stock. Los cambios en precios pueden variar rápidamente, lo cual presenta desafíos para las empresas que desean optimizar sus estrategias de venta y mantenerse competitivas. Además, los productos no existen de forma aislada, sino que están conectados con otros productos y proveedores, formando relaciones complejas que impactan las decisiones de precios y disponibilidad.
+En el dinámico entorno de las redes sociales, comprender y analizar el comportamiento de los usuarios es fundamental para empresas, investigadores y profesionales del marketing. Twitter, con su flujo constante de tweets, ofrece una mina de oro de información que, si se analiza adecuadamente, puede revelar tendencias, sentimientos y patrones de interacción. Este proyecto está diseñado para extraer, analizar y generar **insights valiosos** de los datos de Twitter, proporcionando herramientas prácticas para la toma de decisiones informadas.
 
-El problema principal que se aborda en este proyecto es cómo **monitorear y analizar en tiempo real las fluctuaciones de precios y stock** de múltiples productos de diferentes proveedores, identificando patrones, tendencias y relaciones entre productos que puedan afectar la toma de decisiones comerciales. Además, se busca responder a preguntas clave que pueden ayudar a las empresas a adaptar sus estrategias de precios y promociones con base en el comportamiento del mercado.
+## 🚀 **Objetivo del Proyecto**
 
-Para resolver este problema, se diseñará un sistema de monitoreo que capture y almacene los datos de productos y relaciones utilizando dos enfoques de modelado de datos:
+El proyecto tiene como objetivo analizar los datos obtenidos de Twitter y generar insights valiosos mediante el **análisis de sentimientos**, la **identificación de usuarios influyentes**, la **detección de tendencias** y la **visualización de relaciones entre usuarios y temas**. Utiliza una combinación de **modelos de datos relacionales** y **basados en grafos** para ofrecer un enfoque robusto y detallado.
 
-1. **Modelo de datos relacional (MySQL)**: Este modelo permite estructurar y organizar los datos históricos de productos, precios y stock, facilitando el análisis de tendencias y patrones a lo largo del tiempo.
-2. **Modelo de datos basado en grafos (Neo4j)**: Este modelo es ideal para capturar las relaciones entre productos y proveedores, así como explorar cómo un cambio en el precio de un producto afecta a otros productos relacionados.
+### **Descripción del Problema que se Resuelve**
 
-## **2. Modelo de Datos Relacional (MySQL)**
-### **Descripción**
-El modelo relacional representa los datos en una serie de tablas que se conectan mediante llaves primarias y llaves foráneas. Este tipo de base de datos es ideal para capturar información estructurada de manera eficiente, permitiendo hacer consultas complejas sobre los datos almacenados.
+Las organizaciones enfrentan múltiples desafíos cuando intentan extraer valor de los datos generados en Twitter:
 
-### **Estructura de Tablas**
-Las siguientes tablas serán utilizadas para almacenar los datos de productos y proveedores:
+1. **📈 Gestión de Grandes Volúmenes de Datos**: La gran cantidad de tweets generados constantemente.
+2. **😊 Análisis de Sentimientos**: Determinar el tono emocional de los tweets para evaluar la percepción pública.
+3. **👥 Identificación de Influencers**: Reconocer a los usuarios con mayor impacto y seguidores.
+4. **🔍 Detección de Tendencias**: Identificar temas emergentes y su evolución temporal.
+5. **🕸️ Visualización de Relaciones**: Entender cómo interactúan los usuarios y cómo se conectan los temas.
 
-1. **`productos`**:
-   - `id_producto`: Entero, clave primaria.
-   - `nombre`: Texto, nombre del producto.
-   - `categoria`: Texto, categoría del producto (por ejemplo, "Laptops", "Smartphones").
-   - `descripcion`: Texto, descripción del producto.
+Este proyecto soluciona estos problemas mediante la recolección de datos, el análisis y la visualización de los resultados, utilizando **SQLite** y **Neo4j** para almacenar y analizar los datos.
 
-2. **`precios`**:
-   - `id_precio`: Entero, clave primaria.
-   - `id_producto`: Entero, clave foránea de la tabla `productos`.
-   - `precio`: Decimal, precio del producto.
-   - `fecha_actualizacion`: Fecha, fecha de la última actualización del precio.
+## 🎯 **Preguntas de Valor que Responde el Proyecto**
 
-3. **`stock`**:
-   - `id_stock`: Entero, clave primaria.
-   - `id_producto`: Entero, clave foránea de la tabla `productos`.
-   - `disponibilidad`: Texto, disponibilidad del producto ("In Stock", "Out of Stock").
-   - `fecha_actualizacion`: Fecha, fecha de la última actualización de stock.
-
-4. **`proveedores`**:
-   - `id_proveedor`: Entero, clave primaria.
-   - `nombre`: Texto, nombre del proveedor.
-   - `ubicacion`: Texto, ubicación del proveedor.
-
-5. **`producto_proveedor`**:
-   - `id`: Entero, clave primaria.
-   - `id_producto`: Entero, clave foránea de la tabla `productos`.
-   - `id_proveedor`: Entero, clave foránea de la tabla `proveedores`.
-   - `fecha_inicial`: Fecha, fecha en la que el proveedor comenzó a vender el producto.
-   - `fecha_final`: Fecha, fecha en la que el proveedor dejó de vender el producto (puede ser NULL si aún lo vende).
-
-## **3. Modelo de Datos Basado en Grafos (Neo4j)**
-### **Descripción**
-El modelo de grafos captura las relaciones y conexiones entre los productos y sus proveedores. Cada nodo en el grafo representa un producto o un proveedor, y las aristas representan las relaciones como "vendido por" o "relacionado con". Este enfoque permite realizar consultas complejas sobre conexiones y dependencias entre los productos, como "¿qué productos están relacionados con este proveedor?" o "¿cómo un cambio de precio en un producto afecta a los productos relacionados?".
-
-### **Nodos y Relaciones**
-1. **Nodos**:
-   - `Producto`: Cada producto tiene un nodo con atributos como `nombre`, `categoría` y `descripción`.
-   - `Proveedor`: Cada proveedor tiene un nodo con atributos como `nombre` y `ubicación`.
-
-2. **Relaciones**:
-   - `VENDEDOR_DE`: Une a un `Producto` con un `Proveedor`, indicando que el proveedor vende ese producto.
-   - `RELACIONADO_CON`: Une a dos productos que están relacionados (por ejemplo, productos de la misma categoría o productos complementarios).
-
-### **Ejemplo de Consultas en Grafos (Cypher)**
-1. **Mostrar todos los proveedores que venden un producto específico**:
-   ```cypher
-   MATCH (p:Producto)-[:VENDEDOR_DE]->(v:Proveedor)
-   WHERE p.nombre = "Laptop HP"
-   RETURN v.nombre, v.ubicacion;
-   ```
-
-2. **Encontrar productos relacionados con un producto específico**:
-   ```cypher
-   MATCH (p:Producto)-[:RELACIONADO_CON]->(r:Producto)
-   WHERE p.nombre = "Smartphone Samsung"
-   RETURN r.nombre, r.categoria;
-   ```
-
-## **4. Cinco Preguntas de Valor para Cada Modelo**
-### Preguntas para el Modelo Relacional (MySQL)
-1. ¿Cuál es el precio promedio de un producto en un periodo de tiempo específico?
-   - Consulta para obtener la media de precios de un producto en un rango de fechas.
+1. **📊 ¿Cuál es el sentimiento promedio de los tweets sobre un tema específico?**
    
-2. ¿Qué productos han estado fuera de stock más de tres veces en los últimos seis meses?
-   - Consulta que analiza el historial de disponibilidad y cuenta las veces que un producto ha pasado de "In Stock" a "Out of Stock".
+   El análisis de sentimiento se realiza utilizando herramientas de procesamiento de lenguaje natural, como **TextBlob**. El sentimiento de cada tweet se evalúa en una escala de -1 a 1, y el resultado promedio se calcula para determinar si la conversación en torno a un tema es positiva, negativa o neutral. Este análisis es crucial para entender cómo se perciben temas, productos, o eventos en la plataforma.
 
-3. ¿Cuál es el proveedor con mayor cantidad de productos vendidos en una categoría específica?
-   - Consulta que utiliza la relación entre productos y proveedores para identificar al proveedor principal por categoría.
+2. **👑 ¿Quiénes son los usuarios más influyentes en una red específica?**
+   
+   Los usuarios más influyentes se determinan a partir de su número de seguidores, interacciones (como retweets y likes), y su nivel de verificación. Se realiza un análisis mediante la base de datos **SQLite**, donde se identifican los usuarios más seguidos y los que generan más interacciones. Este análisis permite a las marcas y organizaciones enfocar sus esfuerzos de marketing en los usuarios que tienen mayor capacidad de generar impacto.
 
-4. ¿Qué productos han experimentado más variaciones de precio en el último mes?
-   - Consulta que revisa el número de cambios de precio por producto en los últimos 30 días.
+3. **📈 ¿Cómo han evolucionado las tendencias de conversación a lo largo del tiempo?**
+   
+   El análisis temporal de los tweets permite identificar cómo cambian los temas y la intensidad de la conversación a lo largo del tiempo. Mediante consultas en **SQLite**, se pueden agrupar los tweets por fecha, lo que permite visualizar picos de actividad relacionados con ciertos eventos o tendencias, proporcionando información valiosa para ajustar estrategias en tiempo real.
 
-5. ¿Cuáles son los productos con la menor cantidad de stock en los últimos tres meses?
-   - Consulta que revisa las actualizaciones de stock y determina los productos con menor disponibilidad.
+4. **👥 ¿Existen comunidades de usuarios que interactúan frecuentemente entre sí?**
+   
+   El modelo de **grafos** en **Neo4j** permite explorar cómo los usuarios interactúan entre sí. Identificando grupos de usuarios que se mencionan, retuitean o responden a tweets de otros, se pueden visualizar comunidades de interés. Esta información es útil para segmentar audiencias y generar campañas dirigidas a grupos específicos que ya están interactuando activamente sobre ciertos temas.
 
-### Preguntas para el Modelo de Grafos (Neo4j)
-1. ¿Qué proveedores venden productos de la misma categoría?
-   - Consulta que conecta nodos de productos por categorías y obtiene sus proveedores.
+5. **🔗 ¿Qué relaciones existen entre diferentes temas de conversación?**
+   
+   Utilizando el modelo de grafos, se pueden visualizar las conexiones entre diferentes temas y cómo se relacionan entre sí a través de hashtags, menciones o contenido similar. Esto facilita la identificación de patrones de conversación complejos, mostrando cómo un tema puede derivar en otro y cómo los usuarios se mueven de un tema a otro, lo que ayuda a identificar tendencias emergentes.
 
-2. ¿Cuáles son los productos relacionados con un producto que ha aumentado su precio más de un 10% en el último mes?
-   - Consulta que sigue las relaciones de `RELACIONADO_CON` para analizar el impacto de cambios de precio.
+## 🤔 **Reflexión sobre la Idoneidad de Cada Modelo de Datos en el Proyecto**
 
-3. ¿Qué proveedores compiten en productos similares?
-   - Consulta que identifica productos relacionados y proveedores que compiten en la misma categoría.
+En este proyecto, se utiliza un enfoque de **modelado de datos** que combina dos tipos de bases de datos, cada una ideal para diferentes aspectos del análisis. La elección de estos modelos facilita la extracción de insights complejos de una manera organizada.
 
-4. ¿Qué productos están conectados a proveedores con baja disponibilidad?
-   - Consulta que analiza relaciones de `VENDEDOR_DE` y stock para identificar productos en riesgo de escasez.
+### **Modelo Relacional (SQLite)**
 
-5. ¿Cuáles son los productos que tienen más conexiones con proveedores en la misma ubicación?
-   - Consulta que sigue las relaciones de `VENDEDOR_DE` y agrupa por ubicaciones de proveedores.
+El modelo **relacional** se utiliza principalmente para almacenar y organizar datos estructurados sobre tweets y usuarios. Gracias a su capacidad para manejar grandes volúmenes de datos y realizar consultas estructuradas con SQL, es ideal para realizar análisis estadísticos y agregaciones, como el cálculo del sentimiento promedio o la identificación de los usuarios más influyentes.
 
-## **5. Reflexión sobre la Idoneidad de Cada Tipo de Modelo**
-El **modelo relacional** es ideal para almacenar datos estructurados y realizar análisis de tendencias a lo largo del tiempo. Permite responder preguntas que requieren consultas detalladas sobre datos históricos y estructurados, como precios y disponibilidad en un periodo específico. Sin embargo, no es adecuado para explorar relaciones complejas entre productos y proveedores.
+**Ventajas:**
+- Permite consultas rápidas y eficientes para obtener estadísticas y promedios.
+- Asegura la integridad y organización de los datos mediante claves primarias y foráneas.
 
-El **modelo basado en grafos** es perfecto para capturar y analizar las relaciones complejas entre productos y proveedores. Permite realizar consultas como "¿qué productos se ven afectados si un proveedor específico cambia su precio?", y facilita la visualización de cómo están conectados los productos entre sí. Sin embargo, para análisis basados en tendencias históricas, puede ser menos eficiente que un modelo relacional.
+**Limitaciones:**
+- No es tan eficiente para representar relaciones complejas o explorar interacciones entre entidades, algo que se resuelve con el modelo de grafos.
 
-En conclusión, el uso combinado de **bases de datos relacionales y grafos** proporciona una visión completa de los datos, aprovechando las fortalezas de cada tipo de modelo para crear un sistema de monitorización y análisis robusto y flexible.
+### **Modelo Basado en Grafos (Neo4j)**
 
----
+El modelo **basado en grafos** es crucial para representar las relaciones dinámicas entre usuarios y tweets. En Twitter, las interacciones entre usuarios, como menciones o retweets, pueden ser representadas de manera natural como un grafo, donde los usuarios son nodos y sus interacciones son las relaciones. Esto permite realizar un análisis más profundo de las redes sociales y detectar patrones de influencia y difusión de temas.
 
-Este contenido está diseñado para un **artículo técnico** de estilo Medium o LinkedIn, explicando de manera detallada los beneficios y aplicaciones de cada modelo.
+**Ventajas:**
+- Permite visualizar y explorar relaciones complejas entre usuarios y temas.
+- Facilita la detección de comunidades de usuarios y la propagación de tendencias en la red.
+
+**Limitaciones:**
+- Requiere herramientas especializadas, como **Neo4j**, y conocimientos adicionales en teoría de grafos y su consulta con **Cypher**.
+
+## 🏁 **Pasos para Ejecutar el Proyecto**
+
+### **1. Crear un Entorno Virtual (Virtualenv)**
+
+Para evitar conflictos con otras dependencias, es recomendable crear un entorno virtual.
+
+```bash
+# Instalar virtualenv si no lo tienes
+pip install virtualenv
+
+# Crear un entorno virtual llamado 'twitter-analysis-env'
+virtualenv twitter-analysis-env
+
+# Activar el entorno virtual
+# En Linux/Mac:
+source twitter-analysis-env/bin/activate
+# En Windows:
+twitter-analysis-env\Scripts\activate
+```
+
+### **2. Instalar Dependencias**
+
+Instala las dependencias necesarias desde el archivo `requirements.txt` o ejecutando el siguiente comando:
+
+```bash
+# Crear el archivo requirements.txt con las dependencias necesarias
+pip install -r requirements.txt
+```
+
+Dependencias principales:
+
+- `tweepy`: Para interactuar con la API de Twitter.
+- `neo4j`: Para trabajar con la base de datos basada en grafos.
+- `textblob`: Para realizar análisis de sentimiento.
+- `colorama`: Para mejorar la salida en la terminal.
+- `python-dotenv`: Para gestionar variables de entorno.
+- `openai`: Para procesar y generar resúmenes e insights.
+- `requests-oauthlib`: Para la autenticación con OAuth 2.0.
+
+### **3. Obtener las API Keys de Twitter**
+
+Para acceder a los datos de Twitter, necesitas las **API keys**. Sigue estos pasos:
+
+1. Dirígete a [Twitter Developer Portal](https://developer.twitter.com/en/apps).
+2. Crea una nueva aplicación de Twitter.
+3. Obtén las siguientes claves y tokens:
+   - `TWITTER_CONSUMER_KEY`
+   - `TWITTER_CONSUMER_SECRET`
+   - `TWITTER_ACCESS_TOKEN`
+   - `TWITTER_ACCESS_TOKEN_SECRET`
+   - `TWITTER_OAUTH_ID`
+   - `TWITTER_OAUTH_SECRET`
+   - `TWITTER_BEARER_TOKEN`
+
+Añade estas variables a tu archivo `.env` de configuración:
+
+```ini
+## OAuth 1.0a KEYS (Solo si las necesitas)
+TWITTER_CONSUMER_KEY="tu_consumer_key"
+TWITTER_CONSUMER_SECRET="tu_consumer_secret"
+TWITTER_ACCESS_TOKEN="tu_access_token"
+TWITTER_ACCESS_TOKEN_SECRET="tu_access_token_secret"
+
+## OAuth 2.0 KEYS
+TWITTER_OAUTH_ID="tu_oauth_id"
+TWITTER_OAUTH_SECRET="tu_oauth_secret"
+TWITTER_REDIRECT_URI="https://x.com/"
+TWITTER_SCOPES="tweet.read tweet.write users.read offline.access"
+
+## Bearer Token (Opcional para algunas operaciones)
+TWITTER_BEARER_TOKEN="tu_bearer_token"
+
+## Neo4j Database Credentials
+NEO4J_URI="bolt://localhost:7687"
+NEO4J_USER="neo4j"
+NEO4J_PASSWORD="tu_neo4j_password"
+
+## OPEN AI 
+OPENAI_API_KEY="sk-tu_openai_api_key"
+```
+
+### **4. Ejecutar el Código**
+
+Con las dependencias instaladas y las claves configuradas, puedes proceder a ejecutar el análisis. El flujo del código incluirá la recolección de datos, análisis de sentimientos, y exploración de relaciones con el modelo de grafos. A continuación se muestra cómo ejecutar el script principal.
+
+```bash
+# Ejecuta el script de análisis
+python main.py --fetch
+```
+
+O si ya tienes un archivo JSON con datos de tweets
+
+:
+
+```bash
+# Cargar tweets desde un archivo JSON
+python main.py --load tweets.json
+```
+
+### **5. Visualización de Resultados**
+
+El análisis se realiza en dos bases de datos:
+
+1. **SQLite**: Se utiliza para almacenar los datos estructurados, permitiendo realizar análisis estadísticos y consultas estructuradas.
+2. **Neo4j**: Se usa para explorar relaciones entre usuarios y tweets, visualizando la interacción en una red de grafos.
+
+El análisis generado incluye:
+- **Análisis de Sentimiento**: Promedio de sentimientos de los tweets.
+- **Usuarios Influyentes**: Los usuarios con más seguidores e interacciones.
+- **Tendencias Temporales**: Análisis de la evolución de los temas de conversación a lo largo del tiempo.
+
+Además, se genera un **resumen de los datos utilizando OpenAI**, el cual puede ser publicado en Twitter si se ejecuta en el modo de recolección (`--fetch`).
+
+## 🧩 **Resumen**
+
+Este proyecto proporciona una solución eficiente para transformar los datos de Twitter en insights valiosos para diversas aplicaciones, desde el análisis de sentimientos hasta la identificación de tendencias emergentes. Con el uso de modelos relacionales y basados en grafos, el proyecto ofrece un enfoque detallado y robusto para analizar interacciones entre usuarios y temas.
+
+Sigue estos pasos para ejecutar el código y obtener insights de Twitter en tus propios proyectos. ¡Aprovecha el poder de los datos y lleva tus análisis al siguiente nivel! 🚀📊

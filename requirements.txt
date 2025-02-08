@@ -1,28 +1,7 @@
-
-# Si decides usar SQLAlchemy en el futuro:
-SQLAlchemy
-
-# Para usar dotenv para gestión de variables de entorno:
+tweepy
+neo4j
+textblob
+colorama
 python-dotenv
-
-# Para desarrollo y pruebas:
-pytest
-
-# Pandas
-pandas
-
-# Numpy
-numpy
-
-# requests
-requests
-
-# beautifulsoup4
-bs4
-
-# lxml
-lxml
-
-scipy
-statsmodels
-seaborn
+openai
+requests-oauthlib
