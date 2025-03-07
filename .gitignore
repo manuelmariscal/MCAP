@@ -191,8 +191,9 @@ __pycache__/
 # Archivos creados por Windows
 thumbs.db
 
-
+TD_I/
 tokens.json
 venv
 venv/
 venv/*
+/home/omega/MCAP/TD_I
