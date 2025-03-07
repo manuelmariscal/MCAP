@@ -1,15 +1,3 @@
-:::thinking
-Let me convert the entire content to pure Markdown format. I'll make sure to remove any HTML-specific elements and replace them with Markdown syntax. This includes:
-
-1. Converting HTML divs and tables to Markdown format
-2. Replacing HTML alignment with Markdown spacing
-3. Ensuring all badges and formatting work in standard Markdown
-4. Keeping the content dynamic and visually appealing within Markdown limitations
-
-For the badges, I'll use standard Markdown image syntax `![alt text](image_url)`.
-For tables, I'll use the Markdown table format with pipes.
-For collapsible sections, I'll modify them since pure Markdown doesn't support collapsible sections.
-:::
 # 🌟 MCAP - Maestría en Cómputo Aplicado 🌟
 
 ![Status](https://img.shields.io/badge/Status-In%20Progress-brightgreen?style=for-the-badge)
@@ -32,8 +20,6 @@ For collapsible sections, I'll modify them since pure Markdown doesn't support c
 ---
 
 ## 📚 About
-
-![Coding GIF](https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExaWh5amhvMXFyczhxbTU1a3dkdWplbTZia3FvdDBieG13azh3aG5rcCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/f6hnhHkks8bk4jwjh3/giphy.gif)
 
 Welcome to my academic journey! This repository serves as a living portfolio of my work in the **Master's in Applied Computing** program. 
 
